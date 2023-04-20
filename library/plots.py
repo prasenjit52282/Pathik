@@ -7,14 +7,15 @@ import seaborn as sns
 import numpy as np
 from scipy import stats
 
-np.random.seed(101)
+np.random.seed(121)
 
 plt.rcParams.update({'font.size': 20})
-# plt.rcParams["figure.figsize"] = (10, 8)
+plt.rcParams["figure.figsize"] = (10, 8)
 plt.rcParams["font.weight"] = "bold"
 plt.rcParams["axes.labelweight"] = "bold"
 
-file_path = "/Users/ajay/Desktop/MTP/mtp-bikesense-app/Trails/TW/processed_data_100.csv"
+file_path = "/Users/ajay/Desktop/MTP/bikesense/Trails/TW/processed_data_100.csv"
+output_dir = "/Users/ajay/Desktop/MTP/bikesense/Output/"
 
 data_split = {'Early\nMorning':[],'Morning':[],'Noon':[],'Afternoon':[]}
 time_zone = ['Early\nMorning','Morning','Noon','Afternoon']
@@ -42,7 +43,7 @@ def plot_timezone_speed():
     plt.ylabel("Speed\n(km/hr)")
     plt.grid()
     plt.tight_layout()
-    plt.savefig("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Output/timezone_speed.png")
+    plt.savefig(output_dir+"timezone_speed.png")
     plt.show()
 
 def get_bin_count(norm_dist):
@@ -69,7 +70,7 @@ def plot_speed_rsi():
     plt.xlabel("Speed (km/hr)")
     plt.ylabel("RSI")
     plt.xticks(np.arange(0,100,20))
-    plt.savefig("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Output/rsi_speed.png", bbox_inches='tight')
+    plt.savefig(output_dir+"rsi_speed.png", bbox_inches='tight')
     plt.show()
 
 def process_trail(data):
@@ -95,7 +96,40 @@ def plot_rash_driving():
     plt.ylabel("Future Max Speed(1 Km)")
     plt.grid()
     plt.tight_layout()
-    plt.savefig("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Output/past_future_speed.png", bbox_inches='tight')
+    plt.savefig(output_dir+"past_future_speed.png", bbox_inches='tight')
     plt.show()
 
-plot_rash_driving()
+def plot_speed_loudness():
+    df = pd.read_csv(file_path)
+    df_new = df[["speed","loudness"]].astype("float64")
+    # df_new = df_new[(np.abs(stats.zscore(df_new)) < 2).all(axis=1)]
+    df_new.speed *= 3.6
+    df_new.speed=df_new.speed.apply(lambda e: np.nan if e>120 else e).ffill()
+    df_new=df_new[df_new.loudness > 0].sample(1000)
+
+    # Create the main plot
+    fig, ax = plt.subplots(figsize=(8,6))
+    sns.regplot(x=df_new.speed, y=df_new.loudness, line_kws = {'color':'k','linestyle':'dashed', 'lw':2}, ax=ax)
+
+    ax.set_xlabel("Speed")
+    ax.set_ylabel("loudness (in db)")
+    ax.grid()
+    
+    mean_speed = round(np.mean(df_new.speed),2)
+    # Create the inset plot
+    inset_ax = fig.add_axes([0.68, 0.74, 0.18, 0.13]) # [left, bottom, width, height]
+    sns.kdeplot(df_new.speed,ax=inset_ax,fill=True,color="Orange",alpha=0.4)
+    inset_ax.set_xlabel("Speed Distribution",fontdict={'weight': 'normal','size': 11})
+    inset_ax.set_ylabel("",fontdict={'weight': 'normal','size': 12})
+    inset_ax.set_xticks([0, mean_speed,100])
+    inset_ax.set_xticklabels([0,mean_speed,100],fontdict={'weight': 'normal','size': 10})
+    inset_ax.set_yticklabels([],fontdict={'weight': 'normal','size': 1})
+    inset_ax.axvline(mean_speed, color ='k', lw = 1.5, linestyle='dashed', alpha = 0.75)
+    inset_ax.set_xlim([0, 120])
+    # inset_ax.grid()
+
+    # Save and show the plot
+    plt.savefig(output_dir+"speed_loudness.png", bbox_inches='tight')
+    plt.show()
+
+plot_speed_loudness()
