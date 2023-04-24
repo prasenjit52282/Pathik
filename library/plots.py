@@ -132,4 +132,46 @@ def plot_speed_loudness():
     plt.savefig(output_dir+"speed_loudness.png", bbox_inches='tight')
     plt.show()
 
-plot_speed_loudness()
+
+def plot_poi_speed():
+    df = pd.read_csv(file_path)
+    df_new = df[["speed", "human_made","natural_land",
+                 "high_way","two_way","one_way","water",
+                 "park","school","medical","other_poi"]].astype("float64")
+    
+    df_new.speed *= 3.6
+    df_new.speed=df_new.speed.apply(lambda e: np.nan if e>120 else e).ffill()
+    df_new["speed_category"] = df_new.speed.apply(lambda e: "fast" if e>60 else "medium" if e>30 else "slow")
+
+    print(df_new.speed_category)
+    df_new = df_new.groupby("speed_category").mean()
+
+    # print(df_grouped)
+
+    df_new = df_new.drop(['speed'],axis=1)
+    print(df_new)
+    # Set the 'speed_category' column as the index
+    # df_new.set_index("speed_category", inplace=True)
+
+    # Define the colors for the stacked bars
+    colors = [ "#3498db", "#9b59b6", "#2ecc71", "#e67e22", "#34495e",  "#95a5a6", "#e74c3c", 
+             "#f1c40f", "#1abc9c", "#bdc3c7"]
+
+    # Plot the stacked bar chart
+    ax = df_new.plot.bar(stacked=True, figsize=(10, 6),rot=0,color=colors)
+
+    # Add axis labels and title
+    ax.set_xlabel("Speed Category", fontdict={'size': 12})
+    ax.set_ylabel("Number of POIs",fontdict={'size': 12})
+    ax.set_xticklabels(df_new.index,fontdict={'weight': 'normal','size': 11})
+    ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0],fontdict={'weight': 'normal','size': 11})
+    ax.set_title("Percentage of POI by Speed Category",fontsize=12)
+    ax.legend(title="POI Type", bbox_to_anchor=(1.0, 1.0), fontsize=11, title_fontsize=14)  # add a legend
+
+    plt.tight_layout()
+    # Show the plot
+    plt.show()
+
+
+plot_poi_speed()
