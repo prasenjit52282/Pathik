@@ -209,7 +209,7 @@ class MapFeatExtractor:
         for lat,long in lat_longs.values:
             filepath = f"{img_dir}/img_{data_is_processed_for}_{count}.png"
             map_feats.append(self.get_features_from_circular_patch_save_patch(lat,long,filepath,data_is_processed_for))
-            filepath = filepath.split("bikesense")[1]
+            filepath = filepath.split("TW_DP/TW_DP")[1]
             filepaths.append(f".{filepath}")
             count += 1
         
