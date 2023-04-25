@@ -78,10 +78,12 @@ def get_processed_rows_for(data,x): #x meter Lambda
     group=data.groupby(f"Lambda_{x}")
 
     process_rows=[]
+    gps_data = []
     for i,g in group:
         process_rows.append(process_patch(g[data_columns+[f'cum_dis_{x}']],x)) #ADDED
+        gps_data.append(g[['lat','long']])
 
-    return pd.DataFrame(process_rows)
+    return (pd.DataFrame(process_rows), gps_data)
 
 def process_patch(d,x): #x meter patchs are being processed
     
