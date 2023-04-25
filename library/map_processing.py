@@ -116,8 +116,10 @@ class MapFeatExtractor:
 
         patch=np.multiply(cir_channel,selected_area) # diameter circular patch
         total_area=cir_channel[:,:,0].sum() #taking only one channel
-
+        
         return get_poi_feat(patch,total_area)
+    
+    
     
     def get_features_from_rectangular_patch(self, lat, long, sideLength):    #Doubt total_area calculation
         row_no=int(round((self.lat_long["top_left"]["lat"]-lat)/pix2lat))
@@ -129,17 +131,93 @@ class MapFeatExtractor:
         selected_patch=self.area[row_no-delta:row_no+delta,col_no-delta:col_no+delta].copy()
 
         total_area=selected_patch.shape[0]*selected_patch.shape[1] #taking only one channel
-        # print("total area = ",total_area)
-
         return get_poi_feat(selected_patch,total_area)
+    
+    # def create_image_for_patch(self, gps_points, patch_length):
+    #     mean_lat = gps_points['lat'].mean()
+    #     mean_lon = gps_points['long'].mean()
+    #     row_mid = int(round((self.lat_long["top_left"]["lat"] - mean_lat) / pix2lat))
+    #     col_mid = int(round((mean_lon - self.lat_long["top_left"]["long"]) / pix2long))
+        
+    #     patch_pixels = int(round(self.avg_pixcel_per_meter * ((patch_length+30) / 2)))
+    #     patch_mask = np.full(shape=(2*patch_pixels, 2*patch_pixels,3),fill_value=0,dtype=np.uint8)
 
-    def add_map_features_to_processed_data(self,p_data,data_is_processed_for=100): # default 100 meter
+    #     trail_point_rad = 20
+    #     selected_area = self.area[row_mid-patch_pixels:row_mid+patch_pixels,col_mid-patch_pixels:col_mid+patch_pixels].copy()
+    #     patch_img = Image.fromarray(selected_area, "RGB")
+    #     patch_img.show()
+
+    #     target = np.full(shape=selected_area.shape,fill_value=0,dtype=np.uint8)
+    #     for poi in ["high_way", "two_way", "one_way"]:
+    #         r,g,b=POI[poi]
+    #         target=np.logical_or(np.abs(selected_area-np.array([r,g,b]))<=1, target)
+        
+    #     poi_map=np.logical_and(np.logical_and(target[:,:,0],target[:,:,1]),target[:,:,2])
+    #     poi_map = np.repeat(poi_map[:, :, np.newaxis], 3, axis=2)
+    #     target = np.multiply(selected_area, poi_map)
+    #     patch_img_road = Image.fromarray(target, "RGB")
+    #     patch_img_road.show()
+
+    #     for index, row in gps_points.iterrows():
+    #         lat = row["lat"]
+    #         long = row["long"]
+    #         row_no = int(round((self.lat_long["top_left"]["lat"] - lat) / pix2lat)) - (row_mid - patch_pixels)
+    #         col_no = int(round((long - self.lat_long["top_left"]["long"]) / pix2long)) - (col_mid - patch_pixels)
+            
+    #         delta = int(round(self.avg_pixcel_per_meter * (trail_point_rad / 2)))
+
+    #         # trail_patch = patch_mask[row_no-delta:row_no+delta, col_no-delta:col_no+delta]
+    #         cir_channel=create_3channel_circular_mask(2*delta, 2*delta)
+    #         patch_mask[row_no-delta:row_no+delta, col_no-delta:col_no+delta] = np.logical_or(cir_channel, patch_mask[row_no-delta:row_no+delta, col_no-delta:col_no+delta])
+
+    #     road_trail_image = np.multiply(target,patch_mask)
+    #     patch_img = Image.fromarray(road_trail_image, "RGB")
+    #     patch_img.show()
+
+
+    # def patch_road_trail_image(gps_data_patches):
+    #     count =0
+    #     for gps_points in gps_data_patches:
+    #         self.create_image_for_patch(gps_points, data_is_processed_for)
+    #         count+=1
+    #         if count > 3: break
+
+    def get_features_from_circular_patch_save_patch(self,lat,long,filepath,diameter):
+        row_no=int(round((self.lat_long["top_left"]["lat"]-lat)/pix2lat))
+
+        col_no=int(round((long-self.lat_long["top_left"]["long"])/pix2long))
+
+        delta=int(round(self.avg_pixcel_per_meter*(diameter/2)))
+
+        selected_area=self.area[row_no-delta:row_no+delta,col_no-delta:col_no+delta].copy()
+
+        cir_channel=create_3channel_circular_mask(selected_area.shape[0],selected_area.shape[1])
+
+        patch=np.multiply(cir_channel,selected_area) # diameter circular patch
+        total_area=cir_channel[:,:,0].sum() #taking only one channel
+        
+        patch_img = Image.fromarray(patch, "RGB")
+        patch_img.save(filepath)
+        return get_poi_feat(patch,total_area)
+    
+
+    def add_map_features_to_processed_data(self,p_data,gps_data_patches,img_dir,data_is_processed_for=100): # default 100 meter
         map_feats=[]
         lat_longs=p_data[['lat','long']]
+        filepaths = []
+        count =0
         for lat,long in lat_longs.values:
-            map_feats.append(self.get_features_from_circular_patch(lat,long,data_is_processed_for))
+            filepath = f"{img_dir}/img_{data_is_processed_for}_{count}.png"
+            map_feats.append(self.get_features_from_circular_patch_save_patch(lat,long,filepath,data_is_processed_for))
+            filepath = filepath.split("bikesense")[1]
+            filepaths.append(f".{filepath}")
+            count += 1
+        
+        # patch_road_trail_image(gps_data_patches)
+            
         map_data=pd.DataFrame(map_feats)
-        whole_data=pd.concat([p_data,map_data],axis=1)
+        img_path_data = pd.DataFrame(filepaths,columns=["patch_path"])
+        whole_data=pd.concat([p_data,map_data,img_path_data],axis=1)
         return whole_data
 
     def highlight_path(self, lat, long, sideLength):
@@ -147,8 +225,6 @@ class MapFeatExtractor:
         col_no = int(round((long - self.lat_long["top_left"]["long"]) / pix2long))
         delta = int(round(self.avg_pixcel_per_meter * (sideLength / 2)))
         
-        trail_patch = self.trail_mask[row_no-delta:row_no+delta, col_no-delta:col_no+delta]
-        cir_channel=create_3channel_circular_mask(trail_patch.shape[0], trail_patch.shape[1])
+        cir_channel=create_3channel_circular_mask(2*delta, 2*delta)
 
-        # self.trail_display_image[row_no-delta:row_no+delta, col_no-delta:col_no+delta] = np.multiply(cir_channel, self.area[row_no-delta:row_no+delta, col_no-delta:col_no+delta])
         self.trail_mask[row_no-delta:row_no+delta, col_no-delta:col_no+delta] = np.logical_or(cir_channel, self.trail_mask[row_no-delta:row_no+delta, col_no-delta:col_no+delta])

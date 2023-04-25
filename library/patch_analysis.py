@@ -1,16 +1,13 @@
 from map_processing import MapFeatExtractor, geodistance
-from audio_processing import extract_traffic_noise, intensity_time_plot
 from PIL import Image
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import numpy as np
 
+data_folder= os.getcwd() + "/../Data/Two_W"
 
-data_folder=os.getcwd() + "/../Data/Two_W"
-target_folder="/media/bittu/Data Storage/Projects/TW_DP/TW_DP/Trails/TW"
-
-PATCH_LENGTH = 200.0
+PATCH_LENGTH = 100.0
 PATCH_DISTANCE = 40.0
 
 def patch_analysis(lat, lon):
@@ -64,7 +61,6 @@ def analyse_file(file):
 
     poi_percent_dict = {}
     for pt in center_points:
-        # print(pt)
         patch_data = mapFeatExtractor.get_features_from_circular_patch(pt[0], pt[1], PATCH_LENGTH)
         features = patch_data
         for key, val in features.items():
@@ -76,9 +72,8 @@ def analyse_file(file):
             poi_percent_dict[key] += val
         
         mapFeatExtractor.highlight_path(pt[0],pt[1], PATCH_LENGTH)
-       
-        # break
-    
+        break
+           
     for key in poi_percent_dict.keys():
         poi_percent_dict[key] /= len(center_points)
     
@@ -87,17 +82,13 @@ def analyse_file(file):
     plt.axis('equal')
     plt.show()
 
-    # desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-    # image_path = os.path.join(desktop_path, "patch_img.png")
-
     # Create the image and display it
     patch_img_arr = np.multiply(mapFeatExtractor.trail_mask,mapFeatExtractor.area)
-    # patch_img = Image.fromarray(mapFeatExtractor.trail_display_image, "RGB")
     patch_img = Image.fromarray(patch_img_arr, "RGB")
     patch_img.show()
 
     # Save the image to the desktop
     # patch_img.save(image_path)
 
-extract_traffic_noise("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Data/Two_W/2019/DATA_15_34_16/All/bike_SOUND_2019_02_11_15_34_19_032.wav")
-# analyse_file("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Data/Two_W/2018/DATA_16_02_05/All/byke_GPS_2018_08_04_16_02_08_543.txt")
+# extract_traffic_noise("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Data/Two_W/2019/DATA_15_34_16/All/bike_SOUND_2019_02_11_15_34_19_032.wav")
+analyse_file("/Users/ajay/Desktop/MTP/bikesense/Data/Two_W/2019/DATA_18_13_26/All/bike_GPS_2019_02_04_18_13_26_299.txt")

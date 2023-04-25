@@ -7,14 +7,15 @@ import seaborn as sns
 import numpy as np
 from scipy import stats
 
-np.random.seed(101)
+np.random.seed(121)
 
 plt.rcParams.update({'font.size': 20})
-# plt.rcParams["figure.figsize"] = (10, 8)
+plt.rcParams["figure.figsize"] = (10, 8)
 plt.rcParams["font.weight"] = "bold"
 plt.rcParams["axes.labelweight"] = "bold"
 
-file_path = "/Users/ajay/Desktop/MTP/mtp-bikesense-app/Trails/TW/processed_data_100.csv"
+file_path = "/Users/ajay/Desktop/MTP/bikesense/Trails/TW/processed_data_100.csv"
+output_dir = "/Users/ajay/Desktop/MTP/bikesense/Output/"
 
 data_split = {'Early\nMorning':[],'Morning':[],'Noon':[],'Afternoon':[]}
 time_zone = ['Early\nMorning','Morning','Noon','Afternoon']
@@ -42,7 +43,7 @@ def plot_timezone_speed():
     plt.ylabel("Speed\n(km/hr)")
     plt.grid()
     plt.tight_layout()
-    plt.savefig("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Output/timezone_speed.png")
+    plt.savefig(output_dir+"timezone_speed.png")
     plt.show()
 
 def get_bin_count(norm_dist):
@@ -69,7 +70,7 @@ def plot_speed_rsi():
     plt.xlabel("Speed (km/hr)")
     plt.ylabel("RSI")
     plt.xticks(np.arange(0,100,20))
-    plt.savefig("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Output/rsi_speed.png", bbox_inches='tight')
+    plt.savefig(output_dir+"rsi_speed.png", bbox_inches='tight')
     plt.show()
 
 def process_trail(data):
@@ -95,7 +96,82 @@ def plot_rash_driving():
     plt.ylabel("Future Max Speed(1 Km)")
     plt.grid()
     plt.tight_layout()
-    plt.savefig("/Users/ajay/Desktop/MTP/mtp-bikesense-app/Output/past_future_speed.png", bbox_inches='tight')
+    plt.savefig(output_dir+"past_future_speed.png", bbox_inches='tight')
     plt.show()
 
-plot_rash_driving()
+def plot_speed_loudness():
+    df = pd.read_csv(file_path)
+    df_new = df[["speed","loudness"]].astype("float64")
+    # df_new = df_new[(np.abs(stats.zscore(df_new)) < 2).all(axis=1)]
+    df_new.speed *= 3.6
+    df_new.speed=df_new.speed.apply(lambda e: np.nan if e>120 else e).ffill()
+    df_new=df_new[df_new.loudness > 0].sample(1000)
+
+    # Create the main plot
+    fig, ax = plt.subplots(figsize=(8,6))
+    sns.regplot(x=df_new.speed, y=df_new.loudness, line_kws = {'color':'k','linestyle':'dashed', 'lw':2}, ax=ax)
+
+    ax.set_xlabel("Speed")
+    ax.set_ylabel("loudness (in db)")
+    ax.grid()
+    
+    mean_speed = round(np.mean(df_new.speed),2)
+    # Create the inset plot
+    inset_ax = fig.add_axes([0.68, 0.74, 0.18, 0.13]) # [left, bottom, width, height]
+    sns.kdeplot(df_new.speed,ax=inset_ax,fill=True,color="Orange",alpha=0.4)
+    inset_ax.set_xlabel("Speed Distribution",fontdict={'weight': 'normal','size': 11})
+    inset_ax.set_ylabel("",fontdict={'weight': 'normal','size': 12})
+    inset_ax.set_xticks([0, mean_speed,100])
+    inset_ax.set_xticklabels([0,mean_speed,100],fontdict={'weight': 'normal','size': 10})
+    inset_ax.set_yticklabels([],fontdict={'weight': 'normal','size': 1})
+    inset_ax.axvline(mean_speed, color ='k', lw = 1.5, linestyle='dashed', alpha = 0.75)
+    inset_ax.set_xlim([0, 120])
+    # inset_ax.grid()
+
+    # Save and show the plot
+    plt.savefig(output_dir+"speed_loudness.png", bbox_inches='tight')
+    plt.show()
+
+
+def plot_poi_speed():
+    df = pd.read_csv(file_path)
+    df_new = df[["speed", "human_made","natural_land",
+                 "high_way","two_way","one_way","water",
+                 "park","school","medical","other_poi"]].astype("float64")
+    
+    df_new.speed *= 3.6
+    df_new.speed=df_new.speed.apply(lambda e: np.nan if e>120 else e).ffill()
+    df_new["speed_category"] = df_new.speed.apply(lambda e: "fast" if e>60 else "medium" if e>30 else "slow")
+
+    print(df_new.speed_category)
+    df_new = df_new.groupby("speed_category").mean()
+
+    # print(df_grouped)
+
+    df_new = df_new.drop(['speed'],axis=1)
+    print(df_new)
+    # Set the 'speed_category' column as the index
+    # df_new.set_index("speed_category", inplace=True)
+
+    # Define the colors for the stacked bars
+    colors = [ "#3498db", "#9b59b6", "#2ecc71", "#e67e22", "#34495e",  "#95a5a6", "#e74c3c", 
+             "#f1c40f", "#1abc9c", "#bdc3c7"]
+
+    # Plot the stacked bar chart
+    ax = df_new.plot.bar(stacked=True, figsize=(10, 6),rot=0,color=colors)
+
+    # Add axis labels and title
+    ax.set_xlabel("Speed Category", fontdict={'size': 12})
+    ax.set_ylabel("Number of POIs",fontdict={'size': 12})
+    ax.set_xticklabels(df_new.index,fontdict={'weight': 'normal','size': 11})
+    ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0],fontdict={'weight': 'normal','size': 11})
+    ax.set_title("Percentage of POI by Speed Category",fontsize=12)
+    ax.legend(title="POI Type", bbox_to_anchor=(1.0, 1.0), fontsize=11, title_fontsize=14)  # add a legend
+
+    plt.tight_layout()
+    # Show the plot
+    plt.show()
+
+
+plot_poi_speed()
