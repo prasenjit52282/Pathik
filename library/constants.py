@@ -8,3 +8,7 @@ speed_threshold=0.5 # m/sec Threshold below which vehicle will considered stoppe
 
 data_folder="./Data/Two_W"
 target_folder="./Trails/TW"
+
+WINDOW=10
+MAXSPEED=110
+RESIZE=(64,64)
