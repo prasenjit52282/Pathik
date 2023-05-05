@@ -89,15 +89,19 @@ tod_count=list(data_tod.values())
 colors = sns.color_palette(n_colors=4)
 explode = (0.05, 0.05, 0.05, 0.05)
 
-plt.pie(tod_count, colors=colors, labels=tod,
+fig, ax = plt.subplots()
+ax.pie(tod_count, colors=colors, labels=tod,
         autopct='%1.1f%%', pctdistance=0.78,radius=0.8,
-        explode=explode,textprops=dict(size=16), 
-        startangle=90)
+        explode=explode,startangle=90)
+
 centre_circle = plt.Circle((0, 0), 0.51, fc='white')
-fig = plt.gcf()
-fig.gca().add_artist(centre_circle)
-plt.tight_layout()
-plt.savefig("./logs/data_collection/tod_pie.png")
+ax.add_artist(centre_circle)
+fig.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+ax.axis('equal')
+ax.margins(0, 0)
+
+plt.savefig("./logs/data_collection/tod_pie.png", pad_inches=0.2,
+    bbox_inches='tight',)
 plt.close()
 
 #Q5. Year-wise Month wise day-wise distance collected
