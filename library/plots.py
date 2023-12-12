@@ -64,15 +64,16 @@ def plot_speed_rsi():
     # print(df_new.shape)
     bin=np.max([get_bin_count(df_new["speed"]),get_bin_count(df_new["rsi"])])
     # bin=100
-    g = sns.jointplot(data = df_new, x = "speed", y = "rsi", space=0, kind = "reg", marker = '+', scatter_kws = {'alpha':0.2}, line_kws = {'color':'k','linestyle':'dashed', 'lw':1.5}, marginal_kws=dict(bins=bin,fill=True))
+    g = sns.jointplot(data = df_new, x = "rsi", y = "speed", space=0, kind = "reg", marker = '+', scatter_kws = {'alpha':0.2}, line_kws = {'color':'k','linestyle':'dashed', 'lw':1.5}, marginal_kws=dict(bins=bin,fill=True))
     g.plot_joint(sns.kdeplot, color="orange", zorder=0, levels=6)
     # g.plot_marginals(sns.rugplot, color="r",height=-.05, clip_on=False)
     # plt.tight_layout()
     plt.grid()
-    plt.xlabel("Speed (km/hr)")
-    plt.ylabel("RSI")
-    plt.ylim(0,4)
-    plt.xticks(np.arange(0,100,20))
+    plt.xlabel("RSI")
+    plt.ylabel("Speed (km/hr)")
+    plt.xlim(0,4)
+    plt.ylim(0,80)
+    plt.yticks(np.arange(0,100,20))
     plt.savefig(output_dir+"rsi_speed.png", bbox_inches='tight')
     #plt.show()
     plt.close()
@@ -95,7 +96,7 @@ def plot_rash_driving():
         past_speeds.extend(past_speed)
         future_speeds.extend(future_speed)
     
-    sns.regplot(x=past_speeds, y=future_speeds, line_kws = {'color':'k','linestyle':'dashed', 'lw':2})
+    sns.regplot(x=past_speeds, y=future_speeds, line_kws = {'color':'k','linestyle':'dashed', 'lw':2},scatter_kws=dict(alpha=0.5))
     plt.xlabel("Prev Max Speed (km/hr)")
     plt.ylabel("Next Max Speed (km/hr)")
     plt.grid()
@@ -114,7 +115,7 @@ def plot_speed_loudness():
 
     # Create the main plot
     fig, ax = plt.subplots()
-    sns.regplot(x=df_new.speed, y=df_new.loudness, line_kws = {'color':'k','linestyle':'dashed', 'lw':2}, ax=ax)
+    sns.regplot(x=df_new.speed, y=df_new.loudness, line_kws = {'color':'k','linestyle':'dashed', 'lw':2}, ax=ax,scatter_kws=dict(alpha=0.5))
 
     ax.set_xlabel("Speed (km/hr)")
     ax.set_ylabel("Loudness (dB)")
