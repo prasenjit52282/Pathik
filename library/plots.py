@@ -9,13 +9,12 @@ from scipy import stats
 
 np.random.seed(121)
 
-plt.rcParams.update({'font.size': 20})
-plt.rcParams["figure.figsize"] = (10, 8)
+plt.rcParams.update({'font.size': 16})
 plt.rcParams["font.weight"] = "bold"
 plt.rcParams["axes.labelweight"] = "bold"
 
-file_path = "/Users/ajay/Desktop/MTP/bikesense/Trails/TW/processed_data_100.csv"
-output_dir = "/Users/ajay/Desktop/MTP/bikesense/Output/"
+file_path = "Trails/TW/processed_data_100.csv"
+output_dir = "Output/"
 
 data_split = {'Early\nMorning':[],'Morning':[],'Noon':[],'Afternoon':[]}
 time_zone = ['Early\nMorning','Morning','Noon','Afternoon']
@@ -37,14 +36,15 @@ with open(file_path) as f:
         data_split[time_zone[time_split]].append(3.6*float(row[13]))
 
 def plot_timezone_speed():
-    plt.boxplot(list(data_split.values()),showfliers=False,labels=time_zone)
+    plt.boxplot(list(data_split.values()),showfliers=False,labels=time_zone,patch_artist=True,notch=True,boxprops=dict(facecolor='lightgray', color='k'))
     plt.ylim(0,80)
-    plt.xlabel("Time Zone")
-    plt.ylabel("Speed\n(km/hr)")
+    plt.xlabel("Time of Day")
+    plt.ylabel("Speed (km/hr)")
     plt.grid()
     plt.tight_layout()
     plt.savefig(output_dir+"timezone_speed.png")
-    plt.show()
+    #plt.show()
+    plt.close()
 
 def get_bin_count(norm_dist):
     q1 = norm_dist.quantile(0.25)
@@ -59,9 +59,11 @@ def plot_speed_rsi():
     df = pd.read_csv(file_path)
     df_new = df.sample(1000)[["speed","rsi"]].astype("float64")
     df_new["speed"] *= 3.6
-    df_new = df_new[(np.abs(stats.zscore(df_new)) < 3).all(axis=1)]
+    # print(df_new.shape)
+    df_new = df_new[(np.abs(stats.zscore(df_new)) < 2).any(axis=1)]
+    # print(df_new.shape)
     bin=np.max([get_bin_count(df_new["speed"]),get_bin_count(df_new["rsi"])])
-   
+    # bin=100
     g = sns.jointplot(data = df_new, x = "speed", y = "rsi", space=0, kind = "reg", marker = '+', scatter_kws = {'alpha':0.2}, line_kws = {'color':'k','linestyle':'dashed', 'lw':1.5}, marginal_kws=dict(bins=bin,fill=True))
     g.plot_joint(sns.kdeplot, color="orange", zorder=0, levels=6)
     # g.plot_marginals(sns.rugplot, color="r",height=-.05, clip_on=False)
@@ -69,9 +71,11 @@ def plot_speed_rsi():
     plt.grid()
     plt.xlabel("Speed (km/hr)")
     plt.ylabel("RSI")
+    plt.ylim(0,4)
     plt.xticks(np.arange(0,100,20))
     plt.savefig(output_dir+"rsi_speed.png", bbox_inches='tight')
-    plt.show()
+    #plt.show()
+    plt.close()
 
 def process_trail(data):
     n=10
@@ -92,12 +96,13 @@ def plot_rash_driving():
         future_speeds.extend(future_speed)
     
     sns.regplot(x=past_speeds, y=future_speeds, line_kws = {'color':'k','linestyle':'dashed', 'lw':2})
-    plt.xlabel("Past Max Speed(1 Km)")
-    plt.ylabel("Future Max Speed(1 Km)")
+    plt.xlabel("Prev Max Speed (km/hr)")
+    plt.ylabel("Next Max Speed (km/hr)")
     plt.grid()
     plt.tight_layout()
     plt.savefig(output_dir+"past_future_speed.png", bbox_inches='tight')
-    plt.show()
+    #plt.show()
+    plt.close()
 
 def plot_speed_loudness():
     df = pd.read_csv(file_path)
@@ -108,11 +113,11 @@ def plot_speed_loudness():
     df_new=df_new[df_new.loudness > 0].sample(1000)
 
     # Create the main plot
-    fig, ax = plt.subplots(figsize=(8,6))
+    fig, ax = plt.subplots()
     sns.regplot(x=df_new.speed, y=df_new.loudness, line_kws = {'color':'k','linestyle':'dashed', 'lw':2}, ax=ax)
 
-    ax.set_xlabel("Speed")
-    ax.set_ylabel("loudness (in db)")
+    ax.set_xlabel("Speed (km/hr)")
+    ax.set_ylabel("Loudness (dB)")
     ax.grid()
     
     mean_speed = round(np.mean(df_new.speed),2)
@@ -130,7 +135,8 @@ def plot_speed_loudness():
 
     # Save and show the plot
     plt.savefig(output_dir+"speed_loudness.png", bbox_inches='tight')
-    plt.show()
+    #plt.show()
+    plt.close()
 
 
 def plot_poi_speed():
@@ -170,8 +176,13 @@ def plot_poi_speed():
     ax.legend(title="POI Type", bbox_to_anchor=(1.0, 1.0), fontsize=11, title_fontsize=14)  # add a legend
 
     plt.tight_layout()
+    plt.savefig(output_dir+"speed_poi.png")
     # Show the plot
-    plt.show()
+    #plt.show()
+    plt.close()
 
-
+plot_timezone_speed()
+plot_speed_rsi()
+plot_rash_driving()
+plot_speed_loudness()
 plot_poi_speed()
