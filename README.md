@@ -47,6 +47,7 @@ Pathik
 ```
 
 # Reference
+This paper has been accepted in the Work-in-Progress track of IEEE PerCom 2024. You can download the preprint of the paper from [here](https://github.com/prasenjit52282/Pathik/blob/main/Pathik_PerCom2024_WIP.pdf).
 
 BibTex Reference:
 ```
