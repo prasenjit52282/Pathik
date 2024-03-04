@@ -1,5 +1,0 @@
-30 (Near School) / 45 (In Ghat roads) / 50 (City/State Highway/ All other places) / 70(National Highway) / 80 (4-lane highway)
-
-ref [https://en.wikipedia.org/wiki/Speed_limits_in_India]
-
-speed_groups =[ <30, <60, <80,  >80]
