@@ -51,7 +51,14 @@ This paper has been accepted in the Work-in-Progress track of IEEE PerCom 2024. 
 
 BibTex Reference:
 ```
-Comming Soon
+@inproceedings{karmakar2024multimodal,
+  title={Multimodal Sensing for Predicting Real-time Biking Behavior based on Contextual Information},
+  author={Karmakar, Prasenjit and Meena, Ajay Kumar and Natani, Kushal and Chakraborty, Sandip},
+  booktitle={2024 IEEE International Conference on Pervasive Computing and Communications Workshops and other Affiliated Events (PerCom Workshops)},
+  pages={441--444},
+  year={2024},
+  organization={IEEE}
+}
 ```
 
 For questions and general feedback, contact Prasenjit Karmakar (pkarmakar@kgpian.iitkgp.ac.in).
